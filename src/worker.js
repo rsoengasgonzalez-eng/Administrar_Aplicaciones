@@ -680,11 +680,12 @@ async function mesaApi() {
   );
 }
 
-async function escapeApi() {
+async function overpassEscapeApi() {
   const query = `[out:json][timeout:22];
     (
       nwr["leisure"="escape_game"](40.20,-4.10,40.70,-3.30);
       nwr["attraction"="escape_room"](40.20,-4.10,40.70,-3.30);
+      nwr["name"~"escape|room escape",i](40.20,-4.10,40.70,-3.30);
     );
     out center tags;`;
   const data = await queryOverpass(query, "escape-rooms-v4");
@@ -723,6 +724,174 @@ async function escapeApi() {
     200,
     { "cache-control": "public, max-age=3600" },
   );
+}
+
+function catalogArray(payload) {
+  if (Array.isArray(payload)) return payload;
+  for (const key of ["items", "rooms", "escapeRooms", "escapes", "results", "events"]) {
+    if (Array.isArray(payload?.[key])) return payload[key];
+  }
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (payload?.data && typeof payload.data === "object") return catalogArray(payload.data);
+  return [];
+}
+
+function normalizeEscapeRoom(room, index) {
+  const latitude = Number(room.lat ?? room.latitude ?? room.coordinates?.lat);
+  const longitude = Number(
+    room.lng ?? room.lon ?? room.longitude ?? room.coordinates?.lng ?? room.coordinates?.lon,
+  );
+  const themes = Array.isArray(room.themes)
+    ? room.themes
+    : room.theme
+      ? [room.theme]
+      : room.category
+        ? [room.category]
+        : [];
+
+  return {
+    id: String(room.id ?? room.slug ?? `escape-${index + 1}`),
+    name: clean(room.name ?? room.title, 160),
+    company: clean(room.company ?? room.operator ?? room.brand ?? room.organizer ?? room.name, 120),
+    lat: Number.isFinite(latitude) ? latitude : null,
+    lng: Number.isFinite(longitude) ? longitude : null,
+    address: clean(room.address ?? room.location?.address ?? room.venue?.address, 220) ||
+      "Dirección no publicada",
+    area: clean(
+      room.area ?? room.zone ?? room.neighbourhood ?? room.city ?? room.location?.area,
+      100,
+    ) || "Comunidad de Madrid",
+    website: clean(
+      room.website ?? room.officialUrl ?? room.official_url ?? room.bookingUrl ?? room.booking_url,
+      500,
+    ),
+    bookingUrl: clean(room.bookingUrl ?? room.booking_url, 500),
+    sourceUrl: clean(room.sourceUrl ?? room.source_url ?? room.url, 500),
+    phone: clean(room.phone ?? room.telephone ?? room.contact?.phone, 80),
+    openingHours: clean(room.openingHours ?? room.opening_hours ?? room.schedule, 240),
+    description: clean(room.description ?? room.note ?? room.summary, 600),
+    themes,
+    minPlayers: Number(room.minPlayers ?? room.min_players) || null,
+    maxPlayers: Number(room.maxPlayers ?? room.max_players) || null,
+    duration: Number(room.duration ?? room.durationMinutes ?? room.duration_minutes) || null,
+    pricing: room.pricing ?? null,
+    price: clean(room.price ?? room.priceText ?? room.pricing?.published, 160),
+  };
+}
+
+function parseEscapeDataScript(source) {
+  const match = source.match(/(?:window\.)?ESCAPE_ROOMS\s*=\s*(\[[\s\S]*?\])\s*;?\s*$/m);
+  if (!match) return [];
+
+  // The original scaperooms asset is a plain object-literal catalog. Quoting
+  // property names makes it valid JSON without evaluating remote JavaScript.
+  const jsonText = match[1].replace(
+    /([{,]\s*)([A-Za-z_$][A-Za-z0-9_$]*|\d+)(\s*:)/g,
+    '$1"$2"$3',
+  );
+  try {
+    return JSON.parse(jsonText);
+  } catch {
+    // Some historical catalogs contain editorial quotes inside note strings.
+    // Parse their record-oriented format without evaluating remote code.
+    const quoted = (block, field) =>
+      new RegExp(`${field}:\\s*"([^"\\n]*)"`).exec(block)?.[1] || "";
+    const number = (block, field) => {
+      const value = Number(new RegExp(`${field}:\\s*(\\d+)`).exec(block)?.[1]);
+      return Number.isFinite(value) && value > 0 ? value : null;
+    };
+
+    return match[1]
+      .slice(1, -1)
+      .split(/\n\s*},\s*\n\s*{/)
+      .map((fragment) => {
+        const themesText = /themes:\s*\[([^\]]*)\]/.exec(fragment)?.[1] || "";
+        const themes = [...themesText.matchAll(/"([^"]+)"/g)].map((item) => item[1]);
+        const note = /note:\s*"(.*)"\s*$/m.exec(fragment)?.[1] || "";
+        return {
+          id: quoted(fragment, "id"),
+          name: quoted(fragment, "name"),
+          company: quoted(fragment, "company"),
+          area: quoted(fragment, "area"),
+          address: quoted(fragment, "address"),
+          themes,
+          minPlayers: number(fragment, "minPlayers"),
+          maxPlayers: number(fragment, "maxPlayers"),
+          duration: number(fragment, "duration"),
+          officialUrl: quoted(fragment, "officialUrl"),
+          bookingUrl: quoted(fragment, "bookingUrl"),
+          sourceUrl: quoted(fragment, "sourceUrl"),
+          note,
+          pricing: {
+            published: quoted(fragment, "published"),
+          },
+        };
+      })
+      .filter((room) => room.id && room.name);
+  }
+}
+
+async function fetchEscapeCatalogFromService(binding) {
+  if (!binding) return null;
+
+  const candidates = [
+    "/api/rooms",
+    "/api/escape/rooms",
+    "/api/escape-rooms",
+    "/api/escapes",
+    "/api/bootstrap",
+    "/data.js",
+  ];
+
+  for (const pathname of candidates) {
+    try {
+      const response = await binding.fetch(
+        new Request(`https://scaperooms.internal${pathname}`, {
+          headers: { accept: "application/json, text/javascript;q=0.9, */*;q=0.1" },
+        }),
+      );
+      if (!response.ok) continue;
+
+      const contentType = response.headers.get("content-type") || "";
+      let rawItems = [];
+      if (contentType.includes("json")) {
+        rawItems = catalogArray(await response.json());
+      } else {
+        const text = await response.text();
+        try {
+          rawItems = catalogArray(JSON.parse(text));
+        } catch {
+          rawItems = parseEscapeDataScript(text);
+        }
+      }
+
+      const items = rawItems
+        .map(normalizeEscapeRoom)
+        .filter((room) => room.name);
+      if (items.length) {
+        return {
+          items,
+          source: `Cloudflare service scaperooms (${pathname})`,
+          updatedAt: now(),
+        };
+      }
+    } catch (error) {
+      console.warn(`scaperooms ${pathname} failed`, error);
+    }
+  }
+
+  return null;
+}
+
+async function escapeApi(env) {
+  const serviceCatalog = await fetchEscapeCatalogFromService(env.ESCAPE_ROOMS);
+  if (serviceCatalog) {
+    return json(serviceCatalog, 200, { "cache-control": "public, max-age=300" });
+  }
+
+  // Resilient fallback: real OpenStreetMap data if the dedicated service is
+  // temporarily unavailable or exposes no supported catalog endpoint.
+  return overpassEscapeApi();
 }
 
 function proxiedApiPath(pathname, prefix) {
@@ -802,7 +971,7 @@ export default {
       }
 
       if (request.method === "GET" && url.pathname === "/api/escape/rooms") {
-        return secure(await escapeApi());
+        return secure(await escapeApi(env));
       }
 
       if (request.method === "GET" && url.pathname === "/api/health") {
@@ -813,6 +982,7 @@ export default {
           planesStore: Boolean(env.PLANES_STORE),
           madridMysteryService: Boolean(env.MADRID_MYSTERY),
           musicHubService: Boolean(env.MUSIC_HUB),
+          escapeRoomsService: Boolean(env.ESCAPE_ROOMS),
           liveData: ["mesa-madrid", "escape-madrid"],
         });
       }

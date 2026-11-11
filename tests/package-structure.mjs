@@ -47,7 +47,8 @@ assert.deepEqual(config.migrations, [
 ]);
 assert.deepEqual(config.services, [
   { binding: "MADRID_MYSTERY", service: "juego" },
-  { binding: "MUSIC_HUB", service: "musichub" },
+  { binding: "MUSIC_HUB", service: "musica" },
+  { binding: "ESCAPE_ROOMS", service: "scaperooms" },
 ]);
 
 const worker = read("src/worker.js");

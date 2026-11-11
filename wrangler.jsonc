@@ -1,16 +1,16 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "administrar-aplicaciones",
   "main": "./src/worker.js",
   "compatibility_date": "2026-11-11",
+  "workers_dev": true,
 
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": [
-      "/api/*"
-    ]
+    "run_worker_first": ["/api/*"],
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
   },
 
   "durable_objects": {
@@ -25,9 +25,26 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": [
-        "PlansStore"
-      ]
+      "new_sqlite_classes": ["PlansStore"]
     }
-  ]
+  ],
+
+  "services": [
+    {
+      "binding": "MADRID_MYSTERY",
+      "service": "juego"
+    },
+    {
+      "binding": "MUSIC_HUB",
+      "service": "musica"
+    },
+    {
+      "binding": "ESCAPE_ROOMS",
+      "service": "scaperooms"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
 }

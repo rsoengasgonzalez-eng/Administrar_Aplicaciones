@@ -1,12 +1,12 @@
-# Nexus · paquete corregido para Cloudflare Workers
+# Nexus · versión definitiva para Cloudflare Workers
 
-Este repositorio está preparado para subirse directamente a GitHub y desplegarse como **Cloudflare Worker con Static Assets**.
+Este repositorio está preparado para sustituir el contenido del repositorio de GitHub y desplegarse como **Cloudflare Worker con Static Assets**.
 
-## Estructura correcta
+## Estructura
 
 ```text
 /
-├── public/                    # Solo recursos públicos servidos por ASSETS
+├── public/                    # Únicos recursos servidos por ASSETS
 │   ├── index.html
 │   ├── app.js
 │   ├── styles.css
@@ -20,131 +20,69 @@ Este repositorio está preparado para subirse directamente a GitHub y desplegars
 │       ├── madrid-mystery/
 │       └── music-hub/
 ├── src/
-│   └── worker.js              # Código privado del Worker; no se publica como asset
+│   └── worker.js              # No se publica como recurso estático
 ├── tests/
-│   └── integration.mjs
 ├── package.json
 ├── wrangler.jsonc
 └── README.md
 ```
 
-`src/worker.js`, `tests/`, `package.json` y `wrangler.jsonc` permanecen fuera de `public/`.
+## Bindings confirmados
 
-## Configuración de Static Assets
+Nexus mantiene los bindings de Static Assets y Durable Objects que ya funcionaron:
 
-`wrangler.jsonc` contiene:
+- `ASSETS`: sirve `./public`.
+- `PLANES_STORE`: namespace del Durable Object SQLite `PlansStore`.
 
-```jsonc
-"main": "./src/worker.js",
-"assets": {
-  "directory": "./public",
-  "binding": "ASSETS",
-  "run_worker_first": ["/api/*"]
-}
-```
+Los nombres reales de los Workers enlazados son:
 
-De este modo:
+| Binding disponible en Nexus | Worker de destino confirmado |
+|---|---|
+| `MADRID_MYSTERY` | `juego` |
+| `MUSIC_HUB` | `musica` |
+| `ESCAPE_ROOMS` | `scaperooms` |
 
-- las rutas `/api/*` se procesan primero en `src/worker.js`;
-- el resto de las rutas se sirve desde `public/` mediante `env.ASSETS`;
-- `src/worker.js` no queda accesible como archivo estático.
-
-## Service bindings: nombres que debes comprobar
-
-El portal no crea ni inventa identificadores de bases de datos. Madrid Mystery y MusicHub conservan sus propios Workers y sus propias bases D1.
-
-En `wrangler.jsonc` se incluyen estos nombres de servicio:
-
-```jsonc
-"services": [
-  {
-    "binding": "MADRID_MYSTERY",
-    "service": "juego"
-  },
-  {
-    "binding": "MUSIC_HUB",
-    "service": "musichub"
-  }
-]
-```
-
-Antes de desplegar, comprueba en **Cloudflare → Workers & Pages** el nombre exacto de cada Worker:
-
-1. Si el Worker de Madrid Mystery se llama `juego`, no cambies nada. Si tiene otro nombre, sustituye **únicamente** el valor:
-   - `"service": "juego"`
-2. Si el Worker de música se llama `musichub`, no cambies nada. Si tiene otro nombre, sustituye **únicamente** el valor:
-   - `"service": "musichub"`
-
-No cambies los nombres de binding `MADRID_MYSTERY` y `MUSIC_HUB`, porque `src/worker.js` utiliza exactamente esos nombres.
-
-Los tres Workers deben estar en la misma cuenta de Cloudflare para usar service bindings.
-
-## Durable Object de Planes con Alma
-
-Planes con Alma utiliza el Durable Object `PlansStore` con SQLite:
-
-```jsonc
-"durable_objects": {
-  "bindings": [
-    {
-      "name": "PLANES_STORE",
-      "class_name": "PlansStore"
-    }
-  ]
-},
-"migrations": [
-  {
-    "tag": "v1",
-    "new_sqlite_classes": ["PlansStore"]
-  }
-]
-```
-
-No necesita un `database_id`. Wrangler crea la clase SQLite al desplegar la migración por primera vez.
-
-Si este mismo Worker ya desplegó anteriormente la migración `v1` para `PlansStore`, conserva el historial del Worker y no cambies la etiqueta. Si vas a desplegar con otro nombre de Worker, se creará un almacenamiento nuevo y vacío.
+Los bindings están declarados en `wrangler.jsonc`. Los Workers de destino deben existir previamente en la **misma cuenta de Cloudflare**. Un service binding enlaza Workers; no copia, reemplaza ni vacía sus bases de datos.
 
 ## Rutas integradas
 
-| Ruta pública del portal | Destino |
+| Ruta de Nexus | Destino o fuente |
 |---|---|
-| `/api/planes/*` | Durable Object SQLite `PLANES_STORE` |
+| `/api/planes/*` | Durable Object `PLANES_STORE`, instancia con nombre `global` |
 | `/api/mesa/restaurants` | OpenStreetMap mediante Overpass |
-| `/api/escape/rooms` | OpenStreetMap mediante Overpass |
-| `/api/madrid-mystery/*` | Service binding `MADRID_MYSTERY` |
-| `/api/music-hub/*` | Service binding `MUSIC_HUB` |
+| `/api/escape/rooms` | Worker `scaperooms`; OpenStreetMap como respaldo |
+| `/api/madrid-mystery/*` | Worker `juego` |
+| `/api/music-hub/*` | Worker `musica` |
 
-Las rutas de Madrid Mystery y MusicHub admiten tanto el formato usado por sus frontends, por ejemplo `/api/madrid-mystery/api/game`, como el formato abreviado `/api/madrid-mystery/health`. El proxy las convierte en `/api/game` y `/api/health` respectivamente antes de llamar al Worker de destino.
+### Escape Rooms
+
+Nexus intenta obtener el catálogo real de `scaperooms` mediante estas rutas, por orden:
+
+```text
+/api/rooms
+/api/escape/rooms
+/api/escape-rooms
+/api/escapes
+/api/bootstrap
+/data.js
+```
+
+Acepta respuestas con arrays `items`, `rooms`, `escapeRooms`, `escapes`, `results`, `events` o `data`. También puede leer el catálogo `window.ESCAPE_ROOMS` de la aplicación estática original sin ejecutar JavaScript remoto. Si el Worker no ofrece ninguno de estos formatos, Nexus utiliza la consulta real de OpenStreetMap como respaldo.
 
 ## Despliegue desde GitHub
 
-1. Descomprime el ZIP.
-2. Sube **el contenido extraído** a la raíz del repositorio. La carpeta `public/` debe quedar directamente en la raíz.
+1. Extrae el ZIP.
+2. Sustituye el contenido del repositorio por **el contenido extraído**. `public/`, `src/`, `tests/`, `package.json` y `wrangler.jsonc` deben quedar directamente en la raíz.
 3. En Cloudflare abre **Workers & Pages → Create → Import a repository**.
-4. Selecciona el repositorio.
-5. Configura:
+4. Usa:
    - **Root directory:** `/`
    - **Build command:** `npm install`
    - **Deploy command:** `npx wrangler deploy`
    - **Node.js:** 20 o posterior; se recomienda 22.
-6. Verifica los nombres de servicio `juego` y `musichub` antes del primer despliegue.
-7. Despliega.
+5. No configures una carpeta de salida en el panel. Wrangler ya usa `assets.directory = "./public"`.
+6. Despliega primero los Workers de destino `juego`, `musica` y `scaperooms`; después despliega Nexus.
 
-No configures una carpeta de salida manual en el panel: Wrangler usa `assets.directory = "./public"`.
-
-## Validación local
-
-```bash
-npm install
-npm run check
-npm run dev
-```
-
-La instalación puede requerir acceso al registro npm permitido por tu entorno. `npm run check` valida la sintaxis, los proxies, las rutas API y la transformación de los resultados de OpenStreetMap.
-
-## Comprobaciones posteriores al despliegue
-
-Abre en el dominio final:
+## Comprobaciones posteriores
 
 ```text
 /api/health
@@ -155,7 +93,7 @@ Abre en el dominio final:
 /api/music-hub/health
 ```
 
-Resultado esperado de `/api/health`:
+`/api/health` debe indicar:
 
 ```json
 {
@@ -165,12 +103,208 @@ Resultado esperado de `/api/health`:
   "planesStore": true,
   "madridMysteryService": true,
   "musicHubService": true,
+  "escapeRoomsService": true,
   "liveData": ["mesa-madrid", "escape-madrid"]
 }
 ```
 
-Si un service binding devuelve `SERVICE_NOT_CONFIGURED`, revisa el nombre del Worker correspondiente en `wrangler.jsonc`. Si el Worker remoto responde pero su base no está lista, corrige la configuración D1 en el repositorio de esa aplicación; Nexus no necesita ni debe contener sus `database_id`.
+## Cargar y reutilizar datos existentes de Cloudflare
+
+### 1. Diferencia fundamental: D1 frente a Durable Objects SQLite
+
+**D1** es una base SQLite gestionada como recurso independiente. Un Worker la recibe mediante un binding incluido en su propia configuración `d1_databases`. Se administra desde **Storage & databases → D1** o mediante `wrangler d1`.
+
+**Durable Objects SQLite** es almacenamiento privado de cada instancia de un Durable Object. No es una base D1, no tiene `database_id` de D1 y no se administra con `wrangler d1 execute`. Cada objeto —por ejemplo el objeto nombrado `global`— tiene su propia base SQLite.
+
+No importes datos de una tecnología en la otra sin una migración explícita.
+
+### 2. Cómo identificar los recursos reales de cada Worker
+
+Para cada Worker existente (`juego`, `musica`, `scaperooms` y cualquier otro):
+
+1. Abre **Cloudflare → Workers & Pages → nombre del Worker → Settings → Bindings**.
+2. Anota por separado:
+   - nombre del binding visible para el código, por ejemplo `DB`;
+   - tipo del recurso: D1, Durable Object, R2, KV o service binding;
+   - nombre real del recurso enlazado.
+3. Abre el `wrangler.jsonc` del repositorio de ese Worker y comprueba que coincide con el panel.
+4. Para D1, ejecuta en una sesión autenticada de Wrangler:
+
+```bash
+npx wrangler d1 list
+npx wrangler d1 info <NOMBRE_REAL_DE_LA_BASE>
+```
+
+Usa el nombre devuelto por `d1 list`. No copies identificadores de capturas antiguas ni inventes un `database_id`.
+
+Información conocida de los paquetes originales, que debe verificarse contra el despliegue real:
+
+- El código recuperado de `juego` utilizaba un binding D1 llamado `DB` y hacía referencia a una base denominada `madrid-mystery-db`.
+- El código recuperado de `musica` utilizaba un binding D1 llamado `DB` y hacía referencia a una base denominada `music-hub-db`.
+- El binding o tipo de almacenamiento interno de `scaperooms` no se presupone en Nexus. Debes leerlo en **Settings → Bindings** del Worker `scaperooms`.
+- Mesa Madrid obtiene restaurantes de OpenStreetMap y no necesita una base propia en Nexus.
+- EscapeMadrid consume `scaperooms` y utiliza OpenStreetMap como respaldo; Nexus no crea una D1 de Escape Rooms.
+
+### 3. Enlazar Workers sin perder los datos existentes
+
+Los service bindings de Nexus solo apuntan a los Workers desplegados:
+
+```jsonc
+"services": [
+  { "binding": "MADRID_MYSTERY", "service": "juego" },
+  { "binding": "MUSIC_HUB", "service": "musica" },
+  { "binding": "ESCAPE_ROOMS", "service": "scaperooms" }
+]
+```
+
+Para conservar los datos:
+
+- no vuelvas a crear las D1 de `juego` o `musica`;
+- no sustituyas en esos repositorios su binding D1 por una base nueva;
+- no ejecutes `wrangler d1 create` salvo que realmente quieras una base vacía;
+- no cambies el nombre de los Workers de destino sin actualizar después `service` en Nexus;
+- despliega cada aplicación desde su repositorio y Nexus desde el suyo: son Workers independientes.
+
+### 4. Consultar tablas y registros de una D1
+
+Primero identifica el nombre real con `d1 list`. Después:
+
+```bash
+npx wrangler d1 info <NOMBRE_REAL_DE_LA_BASE>
+
+npx wrangler d1 execute <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --command "SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name;"
+```
+
+Para revisar datos, sustituye los nombres por tablas que existan realmente:
+
+```bash
+npx wrangler d1 execute <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --command "SELECT COUNT(*) AS total FROM <TABLA_REAL>;"
+
+npx wrangler d1 execute <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --command "SELECT * FROM <TABLA_REAL> LIMIT 20;"
+```
+
+Tablas esperadas según el código recuperado —verifícalas antes de consultar—:
+
+- `juego`: `players`, `teams`, `team_members`, `case_runs`, `team_case_state`, `team_clue_unlocks`, `team_mission_progress`, `mission_attempts`, `team_accusations`, `team_case_results`, `score_events`.
+- `musica`: `users`, `genres`, `songs`, `plays`, `likes`, `playlists`, `playlist_songs`.
+- `scaperooms`: no se presupone ningún esquema; enumera primero `sqlite_schema` si el Worker tiene D1.
+
+También puedes consultar las tablas desde **Cloudflare → Storage & databases → D1 → base real → Console**.
+
+### 5. Exportar antes de modificar o importar D1
+
+Haz una copia completa antes de ejecutar migraciones o importaciones:
+
+```bash
+npx wrangler d1 export <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --output=./backup-completo.sql
+```
+
+Solo esquema:
+
+```bash
+npx wrangler d1 export <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --output=./schema.sql --no-data
+```
+
+Solo datos:
+
+```bash
+npx wrangler d1 export <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --output=./data.sql --no-schema
+```
+
+### 6. Importar SQL en D1 cuando proceda
+
+Utiliza un archivo SQL compatible con SQLite y revisado. Prueba primero en una base de ensayo si el contenido es importante.
+
+```bash
+npx wrangler d1 execute <NOMBRE_REAL_DE_LA_BASE> --remote \
+  --file=./datos-revisados.sql
+```
+
+Después valida tablas y recuentos. No vuelvas a aplicar a ciegas archivos que contengan `INSERT` sin estrategia de conflicto, porque pueden duplicar registros. Si partes de un archivo `.sqlite3`, conviértelo primero a SQL; D1 no importa directamente el binario SQLite.
+
+### 7. Planes con Alma: acceder al Durable Object `global`
+
+Planes con Alma **no usa D1**. Nexus resuelve siempre la misma instancia con:
+
+```js
+const id = env.PLANES_STORE.idFromName("global");
+const stub = env.PLANES_STORE.get(id);
+```
+
+Para abrir sus datos:
+
+1. Abre **Cloudflare Dashboard → Durable Objects**.
+2. Selecciona el namespace asociado a la clase `PlansStore` del Worker Nexus.
+3. Pulsa **Data Studio**.
+4. Cuando solicite el identificador, introduce el nombre único:
+
+```text
+global
+```
+
+5. Consulta las tablas:
+
+```sql
+SELECT name
+FROM sqlite_schema
+WHERE type = 'table'
+ORDER BY name;
+```
+
+6. Revisa recuentos y datos:
+
+```sql
+SELECT COUNT(*) AS total FROM plans;
+SELECT * FROM plans ORDER BY starts_at LIMIT 50;
+SELECT * FROM users LIMIT 50;
+SELECT * FROM attendees LIMIT 100;
+SELECT * FROM comments ORDER BY created_at DESC LIMIT 100;
+SELECT * FROM polls ORDER BY created_at DESC;
+SELECT * FROM poll_options;
+SELECT * FROM poll_votes;
+```
+
+Data Studio actúa sobre el objeto remoto de producción. Las escrituras son reales y deben hacerse con copia y revisión previa.
+
+### 8. Importar datos en `PlansStore`
+
+No uses `wrangler d1 execute`: `PLANES_STORE` no es D1. Para pocos registros, utiliza **Durable Objects Data Studio** sobre el objeto `global` y ejecuta SQL compatible con las tablas reales.
+
+Orden recomendado por dependencias:
+
+1. `users`
+2. `plans`
+3. `attendees`
+4. `comments`
+5. `polls`
+6. `poll_options`
+7. `poll_votes`
+
+Antes de insertar:
+
+```sql
+SELECT * FROM users;
+SELECT * FROM plans;
+```
+
+Usa identificadores que no colisionen, conserva `owner_id`/`user_id` válidos y prueba primero una única fila. Para cargas grandes, crea una ruta administrativa temporal autenticada o un script de migración específico; no conviertas el Durable Object en D1 ni crees otro objeto con un nombre distinto de `global`, porque Nexus no lo leerá.
+
+## Validación local
+
+```bash
+npm install
+npm run check
+npm run dev
+```
+
+Para probar localmente los tres service bindings, ejecuta también los Workers secundarios o usa Wrangler con varias configuraciones. En producción, los Workers de destino deben desplegarse antes que Nexus.
 
 ## Navegación
 
-Todas las tarjetas, botones de apertura, accesos recientes y enlaces del diálogo de Nexus abren las aplicaciones en una pestaña nueva con `noopener noreferrer`, manteniendo el portal abierto en la pestaña original.
+Todas las tarjetas, botones de apertura, accesos recientes y enlaces del diálogo de Nexus abren la aplicación en una pestaña nueva con `noopener noreferrer`, manteniendo Nexus abierto en la pestaña original.
