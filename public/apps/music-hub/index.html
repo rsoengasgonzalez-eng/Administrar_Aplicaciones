@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0c16">
+  <meta name="description" content="Comparte canciones, crea playlists y descubre el top musical de tu grupo.">
+  <title>MusicHub · La música de tu grupo</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <a class="brand" href="#" data-view-link="home" aria-label="MusicHub, inicio">
+        <span class="brand-mark">M</span>
+        <span><strong>Music</strong>Hub</span>
+      </a>
+
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="home"><span>⌂</span> Inicio</button>
+        <button class="nav-item" data-view="explore"><span>⌕</span> Explorar</button>
+        <button class="nav-item" data-action="open-add"><span>＋</span> Añadir canción</button>
+        <button class="nav-item" data-view="playlists"><span>≡</span> Playlists</button>
+        <button class="nav-item" data-view="profile"><span>◎</span> Mi perfil</button>
+      </nav>
+
+      <div class="sidebar-card">
+        <span class="eyebrow">Radio del grupo</span>
+        <strong>¿No sabes qué poner?</strong>
+        <p>Mezcla todo lo que habéis compartido.</p>
+        <button class="button button-light button-small" data-action="radio">▶ Escuchar</button>
+      </div>
+
+      <div id="sidebarUser" class="sidebar-user"></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input id="globalSearch" type="search" placeholder="Buscar canción, artista o género…" autocomplete="off">
+        </div>
+        <button class="icon-button mobile-add" data-action="open-add" aria-label="Añadir canción">＋</button>
+        <button id="userPill" class="user-pill" data-view="profile" aria-label="Abrir perfil"></button>
+      </header>
+
+      <section id="view-home" class="view active">
+        <section class="hero">
+          <div class="hero-content">
+            <span class="eyebrow">LA BANDA SONORA DEL GRUPO</span>
+            <h1>Todo lo que os gusta,<br><em>en un solo lugar.</em></h1>
+            <p>Comparte enlaces de tus canciones favoritas, crea playlists y descubre quién domina el top.</p>
+            <div class="hero-actions">
+              <button class="button button-primary" data-action="radio">▶ Radio del grupo</button>
+              <button class="button button-ghost" data-action="open-add">＋ Añadir canción</button>
+            </div>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="vinyl"><span></span></div>
+            <div class="hero-note note-one">♪</div>
+            <div class="hero-note note-two">♫</div>
+          </div>
+        </section>
+
+        <section class="stats-grid" id="statsGrid"></section>
+
+        <section class="content-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">RANKING</span>
+              <h2>Top del grupo</h2>
+            </div>
+            <div class="period-switch" aria-label="Periodo del ranking">
+              <button data-period="day">Hoy</button>
+              <button class="active" data-period="week">7 días</button>
+              <button data-period="month">30 días</button>
+              <button data-period="all">Histórico</button>
+            </div>
+          </div>
+          <div id="topSongs" class="top-list"></div>
+        </section>
+
+        <section class="content-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">NOVEDADES</span>
+              <h2>Recién añadidas</h2>
+            </div>
+            <button class="text-button" data-view="explore">Ver todas →</button>
+          </div>
+          <div id="recentSongs" class="song-grid"></div>
+        </section>
+
+        <section class="content-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">PARA CADA MOMENTO</span>
+              <h2>Explorar por género</h2>
+            </div>
+          </div>
+          <div id="genreRail" class="genre-rail"></div>
+        </section>
+      </section>
+
+      <section id="view-explore" class="view">
+        <div class="page-heading">
+          <span class="eyebrow">BIBLIOTECA</span>
+          <h1>Explorar música</h1>
+          <p>Todo lo que vuestro grupo ha compartido.</p>
+        </div>
+        <div class="filter-bar">
+          <select id="genreFilter" aria-label="Filtrar por género"><option value="">Todos los géneros</option></select>
+          <select id="sortFilter" aria-label="Ordenar canciones">
+            <option value="recent">Más recientes</option>
+            <option value="plays">Más escuchadas</option>
+            <option value="likes">Más favoritas</option>
+            <option value="title">Título A–Z</option>
+          </select>
+        </div>
+        <div id="exploreSongs" class="library-list"></div>
+      </section>
+
+      <section id="view-playlists" class="view">
+        <div class="page-heading with-action">
+          <div>
+            <span class="eyebrow">COLECCIONES</span>
+            <h1>Playlists</h1>
+            <p>Crea listas propias o colaborativas.</p>
+          </div>
+          <button class="button button-primary" data-action="open-playlist">＋ Nueva playlist</button>
+        </div>
+        <div id="playlistGrid" class="playlist-grid"></div>
+      </section>
+
+      <section id="view-profile" class="view">
+        <div id="profileHeader" class="profile-header"></div>
+        <div id="profileStats" class="stats-grid profile-stats"></div>
+        <section class="content-section">
+          <div class="section-heading"><h2>Mis aportaciones</h2></div>
+          <div id="profileSongs" class="library-list"></div>
+        </section>
+        <button id="changeUser" class="button button-ghost danger">Cambiar de usuario</button>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Navegación móvil">
+    <button class="active" data-view="home"><span>⌂</span>Inicio</button>
+    <button data-view="explore"><span>⌕</span>Explorar</button>
+    <button class="add-main" data-action="open-add"><span>＋</span></button>
+    <button data-view="playlists"><span>≡</span>Playlists</button>
+    <button data-view="profile"><span>◎</span>Perfil</button>
+  </nav>
+
+  <div id="player" class="player hidden" aria-live="polite">
+    <div id="playerArtwork" class="player-artwork">♪</div>
+    <div class="player-meta"><strong id="playerTitle">—</strong><span id="playerArtist">—</span></div>
+    <button id="playerLike" class="player-control" aria-label="Marcar como favorita">♡</button>
+    <button id="playerOpen" class="player-control player-play" aria-label="Abrir reproductor">▶</button>
+    <button id="playerNext" class="player-control" aria-label="Siguiente canción">›</button>
+    <div class="player-progress"><span></span></div>
+  </div>
+
+  <dialog id="userDialog" class="modal" data-static>
+    <form id="userForm" method="dialog" class="modal-card">
+      <div class="welcome-mark">M</div>
+      <span class="eyebrow">BIENVENIDO A MUSICHUB</span>
+      <h2>¿Cómo te llamamos?</h2>
+      <p>Elige el alias que verá el resto del grupo. No necesitas contraseña para esta primera versión.</p>
+      <label>Tu alias<input name="alias" minlength="2" maxlength="28" placeholder="Ej. Roi" required autofocus></label>
+      <button class="button button-primary button-full" type="submit">Entrar en MusicHub</button>
+      <p class="form-status" data-form-status></p>
+    </form>
+  </dialog>
+
+  <dialog id="songDialog" class="modal">
+    <form id="songForm" method="dialog" class="modal-card modal-wide">
+      <button class="modal-close" type="button" data-close aria-label="Cerrar">×</button>
+      <span class="eyebrow">COMPARTIR MÚSICA</span>
+      <h2>Añadir una canción</h2>
+      <p>Pega un enlace de YouTube, Spotify o SoundCloud. MusicHub guarda los datos, no el archivo musical.</p>
+      <div class="form-grid">
+        <label class="full">Enlace<input name="url" type="url" placeholder="https://open.spotify.com/track/…" required></label>
+        <label>Título<input name="title" maxlength="120" required></label>
+        <label>Artista<input name="artist" maxlength="120" required></label>
+        <label>Género<select name="genreId" id="songGenre" required></select></label>
+        <label>Portada opcional<input name="coverUrl" type="url" placeholder="https://…"></label>
+      </div>
+      <button class="button button-primary button-full" type="submit">＋ Compartir canción</button>
+      <p class="form-status" data-form-status></p>
+    </form>
+  </dialog>
+
+  <dialog id="playlistDialog" class="modal">
+    <form id="playlistForm" method="dialog" class="modal-card">
+      <button class="modal-close" type="button" data-close aria-label="Cerrar">×</button>
+      <span class="eyebrow">NUEVA COLECCIÓN</span>
+      <h2>Crear playlist</h2>
+      <label>Nombre<input name="name" maxlength="60" placeholder="Fiesta del viernes" required></label>
+      <label>Descripción<textarea name="description" maxlength="180" rows="3" placeholder="La selección del grupo…"></textarea></label>
+      <label class="check-label"><input name="collaborative" type="checkbox" checked> Permitir que todos añadan canciones</label>
+      <button class="button button-primary button-full" type="submit">Crear playlist</button>
+      <p class="form-status" data-form-status></p>
+    </form>
+  </dialog>
+
+  <dialog id="playlistDetailDialog" class="modal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" type="button" data-close aria-label="Cerrar">×</button>
+      <div id="playlistDetail"></div>
+    </div>
+  </dialog>
+
+  <dialog id="addToPlaylistDialog" class="modal">
+    <div class="modal-card">
+      <button class="modal-close" type="button" data-close aria-label="Cerrar">×</button>
+      <span class="eyebrow">GUARDAR CANCIÓN</span>
+      <h2>Añadir a playlist</h2>
+      <div id="playlistChoices" class="choice-list"></div>
+      <p class="form-status" data-choice-status></p>
+    </div>
+  </dialog>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#183b35"><meta name="description" content="Restaurantes reales de Madrid obtenidos de OpenStreetMap.">
+  <title>Mesa Madrid · Restaurantes reales</title>
+  <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#inicio"><span class="brand-mark">M</span><span>Mesa Madrid<small>Datos reales y verificables</small></span></a><div class="top-actions"><button class="ghost-btn" id="favoritesBtn" type="button" aria-pressed="false">♡ <span>Favoritos</span> <b id="favoritesCount">0</b></button></div></header>
+<main>
+  <section class="hero" id="inicio"><div><span class="eyebrow">RESTAURANTES · MADRID</span><h1>Encuentra una mesa<br><em>con datos publicados.</em></h1><p>El catálogo se consulta en tiempo real desde OpenStreetMap. No se muestran valoraciones, precios, disponibilidad ni reservas inventadas.</p></div><div class="hero-note"><span id="catalogCount">—</span><small>lugares reales<br>recuperados</small></div></section>
+  <section class="filters-panel" aria-label="Filtros"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Nombre, cocina, barrio o dirección"></label><label>Zona<select id="zoneFilter"><option value="all">Todas</option></select></label><label>Distancia máxima <strong><span id="distanceValue">30</span> km</strong><input id="distanceFilter" type="range" min="1" max="30" value="30"></label><label>Orden<select id="sortSelect"><option value="distance">Más cercanos a Sol</option><option value="name">Nombre</option></select></label><button class="clear-btn" id="clearFiltersBtn" type="button">Limpiar</button></section>
+  <div class="results-bar"><div><strong id="resultCount">0</strong> <span>restaurantes encontrados</span></div><small id="dataStatus" role="status">Conectando con la fuente de datos…</small><div class="view-switch"><button id="listViewBtn" type="button" aria-pressed="true">Lista</button><button id="mapViewBtn" type="button" aria-pressed="false">Mapa</button></div></div>
+  <section class="content-grid"><div class="restaurant-list" id="restaurantList"></div><aside class="map-panel"><div class="map-toolbar"><span id="mapStatusText">Preparando mapa</span><button id="fitMapBtn" type="button">Ver todos</button></div><div class="map-viewport" id="mapViewport" tabindex="0"><div class="map-world" id="mapWorld"><svg class="map-base" viewBox="0 0 1600 1100" aria-label="Mapa esquemático de Madrid"><rect width="1600" height="1100" fill="#edf0e8"/><path d="M0 830 C290 710 410 910 720 820 S1190 690 1600 800 V1100H0Z" fill="#e1eadb"/><g opacity=".78"><path d="M70 560 H1540 M820 30 V1060 M170 100 L1435 1000 M155 1010 L1450 80 M60 270 L1540 820 M70 870 L1510 230" stroke="#fff" stroke-width="13"/></g></svg><div id="markerLayer" class="marker-layer"></div></div><div id="mapPopup" class="map-popup" hidden></div><div class="map-controls"><button id="zoomInBtn" type="button" aria-label="Acercar">+</button><button id="zoomOutBtn" type="button" aria-label="Alejar">−</button><button id="resetMapBtn" type="button" aria-label="Restablecer">⌂</button></div></div><small id="markerCount">0 marcadores</small></aside></section>
+  <section class="source-note"><strong>Fuente:</strong> OpenStreetMap mediante Overpass API, licencia ODbL. Comprueba horarios, teléfono y disponibilidad con el establecimiento antes de desplazarte.</section>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="./app.js" defer></script>
+</body></html>

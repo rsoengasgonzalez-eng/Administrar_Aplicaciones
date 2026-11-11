@@ -1,0 +1,1 @@
+{"name":"Nexus · Centro de Aplicaciones","short_name":"Nexus","description":"Centro unificado para acceder a todas tus aplicaciones.","lang":"es","start_url":"./","scope":"./","display":"standalone","background_color":"#07111f","theme_color":"#07111f","icons":[{"src":"assets/nexus-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

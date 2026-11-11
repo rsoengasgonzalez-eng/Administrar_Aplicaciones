@@ -1,54 +1,176 @@
-# Nexus · Portal integrado v5
+# Nexus · paquete corregido para Cloudflare Workers
 
-Portal Cloudflare Worker que reúne cuatro aplicaciones y ejecuta primero el Worker para todas las rutas `/api/*`.
+Este repositorio está preparado para subirse directamente a GitHub y desplegarse como **Cloudflare Worker con Static Assets**.
 
-## Aplicaciones y fuentes
+## Estructura correcta
 
-- **Planes con Alma:** datos compartidos en un Durable Object con SQLite. La base comienza vacía; no hay planes, perfiles, comentarios ni votaciones precargados.
-- **Madrid Mystery:** el portal envía `/api/madrid-mystery/*` al Worker `juego` mediante un service binding, conservando su D1 y el progreso existente.
-- **MusicHub:** el portal envía `/api/music-hub/*` al Worker `musichub` mediante un service binding, conservando las canciones, reproducciones, favoritos y playlists de su D1.
-- **Mesa Madrid:** restaurantes reales obtenidos de OpenStreetMap/Overpass, sin valoraciones, precios, disponibilidad ni reservas simuladas.
-- **EscapeMadrid:** escape rooms publicados en OpenStreetMap/Overpass, sin precios, aforos, duración o temática inventados.
+```text
+/
+├── public/                    # Solo recursos públicos servidos por ASSETS
+│   ├── index.html
+│   ├── app.js
+│   ├── styles.css
+│   ├── sw.js
+│   ├── manifest.webmanifest
+│   ├── assets/
+│   └── apps/
+│       ├── planes-con-alma/
+│       ├── mesa-madrid/
+│       ├── escape-madrid/
+│       ├── madrid-mystery/
+│       └── music-hub/
+├── src/
+│   └── worker.js              # Código privado del Worker; no se publica como asset
+├── tests/
+│   └── integration.mjs
+├── package.json
+├── wrangler.jsonc
+└── README.md
+```
 
-Todas las tarjetas, accesos recientes y enlaces del diálogo de Nexus abren la aplicación en una pestaña nueva y mantienen abierto el portal original.
+`src/worker.js`, `tests/`, `package.json` y `wrangler.jsonc` permanecen fuera de `public/`.
 
-## Despliegue en Cloudflare desde GitHub
+## Configuración de Static Assets
 
-Requisitos:
+`wrangler.jsonc` contiene:
 
-1. Debe existir el Worker de Madrid Mystery con el nombre de servicio exacto `juego` y su base D1 operativa.
-2. Debe existir el Worker de MusicHub con el nombre de servicio exacto `musichub` y su base D1 operativa.
-3. El repositorio debe conservar `wrangler.jsonc`, `src/worker.js`, `.assetsignore` y la carpeta `apps`.
+```jsonc
+"main": "./src/worker.js",
+"assets": {
+  "directory": "./public",
+  "binding": "ASSETS",
+  "run_worker_first": ["/api/*"]
+}
+```
 
-Configuración de Workers Builds:
+De este modo:
 
-- **Root directory:** `/`
-- **Build command:** `npm install`
-- **Deploy command:** `npx wrangler deploy`
-- **Node:** 22 o posterior
+- las rutas `/api/*` se procesan primero en `src/worker.js`;
+- el resto de las rutas se sirve desde `public/` mediante `env.ASSETS`;
+- `src/worker.js` no queda accesible como archivo estático.
 
-`wrangler.jsonc` crea automáticamente el Durable Object SQLite `PlansStore` en el primer despliegue. No es necesario crear ni introducir un identificador de base para Planes con Alma.
+## Service bindings: nombres que debes comprobar
 
-Los bindings `MADRID_MYSTERY` y `MUSIC_HUB` apuntan a los servicios `juego` y `musichub`. Los tres Workers deben pertenecer a la misma cuenta de Cloudflare. Si alguno tiene otro nombre, cambia su valor `service` en `wrangler.jsonc` antes de desplegar.
+El portal no crea ni inventa identificadores de bases de datos. Madrid Mystery y MusicHub conservan sus propios Workers y sus propias bases D1.
 
-## Comprobación posterior
+En `wrangler.jsonc` se incluyen estos nombres de servicio:
 
-Abre estas rutas en el dominio del portal:
+```jsonc
+"services": [
+  {
+    "binding": "MADRID_MYSTERY",
+    "service": "juego"
+  },
+  {
+    "binding": "MUSIC_HUB",
+    "service": "musichub"
+  }
+]
+```
 
-- `/api/health`
-- `/api/planes/health` con la cabecera `x-client-id`
-- `/api/madrid-mystery/health`
-- `/api/music-hub/health`
-- `/api/mesa/restaurants`
-- `/api/escape/rooms`
+Antes de desplegar, comprueba en **Cloudflare → Workers & Pages** el nombre exacto de cada Worker:
 
-La primera debe indicar `planesStore: true`, `madridMysteryService: true` y `musicHubService: true`. Madrid Mystery y MusicHub deben informar de base de datos lista. Las dos últimas deben devolver `source: OpenStreetMap / Overpass`.
+1. Si el Worker de Madrid Mystery se llama `juego`, no cambies nada. Si tiene otro nombre, sustituye **únicamente** el valor:
+   - `"service": "juego"`
+2. Si el Worker de música se llama `musichub`, no cambies nada. Si tiene otro nombre, sustituye **únicamente** el valor:
+   - `"service": "musichub"`
 
-## Uso local
+No cambies los nombres de binding `MADRID_MYSTERY` y `MUSIC_HUB`, porque `src/worker.js` utiliza exactamente esos nombres.
+
+Los tres Workers deben estar en la misma cuenta de Cloudflare para usar service bindings.
+
+## Durable Object de Planes con Alma
+
+Planes con Alma utiliza el Durable Object `PlansStore` con SQLite:
+
+```jsonc
+"durable_objects": {
+  "bindings": [
+    {
+      "name": "PLANES_STORE",
+      "class_name": "PlansStore"
+    }
+  ]
+},
+"migrations": [
+  {
+    "tag": "v1",
+    "new_sqlite_classes": ["PlansStore"]
+  }
+]
+```
+
+No necesita un `database_id`. Wrangler crea la clase SQLite al desplegar la migración por primera vez.
+
+Si este mismo Worker ya desplegó anteriormente la migración `v1` para `PlansStore`, conserva el historial del Worker y no cambies la etiqueta. Si vas a desplegar con otro nombre de Worker, se creará un almacenamiento nuevo y vacío.
+
+## Rutas integradas
+
+| Ruta pública del portal | Destino |
+|---|---|
+| `/api/planes/*` | Durable Object SQLite `PLANES_STORE` |
+| `/api/mesa/restaurants` | OpenStreetMap mediante Overpass |
+| `/api/escape/rooms` | OpenStreetMap mediante Overpass |
+| `/api/madrid-mystery/*` | Service binding `MADRID_MYSTERY` |
+| `/api/music-hub/*` | Service binding `MUSIC_HUB` |
+
+Las rutas de Madrid Mystery y MusicHub admiten tanto el formato usado por sus frontends, por ejemplo `/api/madrid-mystery/api/game`, como el formato abreviado `/api/madrid-mystery/health`. El proxy las convierte en `/api/game` y `/api/health` respectivamente antes de llamar al Worker de destino.
+
+## Despliegue desde GitHub
+
+1. Descomprime el ZIP.
+2. Sube **el contenido extraído** a la raíz del repositorio. La carpeta `public/` debe quedar directamente en la raíz.
+3. En Cloudflare abre **Workers & Pages → Create → Import a repository**.
+4. Selecciona el repositorio.
+5. Configura:
+   - **Root directory:** `/`
+   - **Build command:** `npm install`
+   - **Deploy command:** `npx wrangler deploy`
+   - **Node.js:** 20 o posterior; se recomienda 22.
+6. Verifica los nombres de servicio `juego` y `musichub` antes del primer despliegue.
+7. Despliega.
+
+No configures una carpeta de salida manual en el panel: Wrangler usa `assets.directory = "./public"`.
+
+## Validación local
 
 ```bash
 npm install
+npm run check
 npm run dev
 ```
 
-El desarrollo local necesita acceso a Cloudflare para Durable Objects y al service binding de Madrid Mystery. Para comprobar solo los archivos estáticos puede usarse `python3 -m http.server 8080`, pero las APIs no estarán disponibles con un servidor estático.
+La instalación puede requerir acceso al registro npm permitido por tu entorno. `npm run check` valida la sintaxis, los proxies, las rutas API y la transformación de los resultados de OpenStreetMap.
+
+## Comprobaciones posteriores al despliegue
+
+Abre en el dominio final:
+
+```text
+/api/health
+/api/planes/health
+/api/mesa/restaurants
+/api/escape/rooms
+/api/madrid-mystery/health
+/api/music-hub/health
+```
+
+Resultado esperado de `/api/health`:
+
+```json
+{
+  "ok": true,
+  "portal": "ready",
+  "assets": true,
+  "planesStore": true,
+  "madridMysteryService": true,
+  "musicHubService": true,
+  "liveData": ["mesa-madrid", "escape-madrid"]
+}
+```
+
+Si un service binding devuelve `SERVICE_NOT_CONFIGURED`, revisa el nombre del Worker correspondiente en `wrangler.jsonc`. Si el Worker remoto responde pero su base no está lista, corrige la configuración D1 en el repositorio de esa aplicación; Nexus no necesita ni debe contener sus `database_id`.
+
+## Navegación
+
+Todas las tarjetas, botones de apertura, accesos recientes y enlaces del diálogo de Nexus abren las aplicaciones en una pestaña nueva con `noopener noreferrer`, manteniendo el portal abierto en la pestaña original.

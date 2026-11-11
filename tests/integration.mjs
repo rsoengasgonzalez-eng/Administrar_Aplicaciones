@@ -13,15 +13,21 @@ const namespace={idFromName(name){assert.equal(name,'global');return 'global-id'
 const env={ASSETS:assets,MADRID_MYSTERY:mystery,MUSIC_HUB:music,PLANES_STORE:namespace};
 
 let response=await worker.fetch(new Request('https://portal.test/api/health'),env);
-assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true,portal:'ready',planesStore:true,madridMysteryService:true,musicHubService:true,liveData:['mesa-madrid','escape-madrid']});
+assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true,portal:'ready',assets:true,planesStore:true,madridMysteryService:true,musicHubService:true,liveData:['mesa-madrid','escape-madrid']});
 response=await worker.fetch(new Request('https://portal.test/api/madrid-mystery/api/game'),env);
 assert.equal(response.status,200);assert.equal(mysteryPath,'/api/game');
+response=await worker.fetch(new Request('https://portal.test/api/madrid-mystery/health'),env);
+assert.equal(response.status,200);assert.equal(mysteryPath,'/api/health');
 response=await worker.fetch(new Request('https://portal.test/api/music-hub/api/bootstrap?period=week'),env);
 assert.equal(response.status,200);assert.equal(musicPath,'/api/bootstrap');
+response=await worker.fetch(new Request('https://portal.test/api/music-hub/health'),env);
+assert.equal(response.status,200);assert.equal(musicPath,'/api/health');
 response=await worker.fetch(new Request('https://portal.test/api/planes/bootstrap',{headers:{'x-client-id':'test'}}),env);
 assert.equal(response.status,200);assert.equal(plansPath,'/api/planes/bootstrap');
 response=await worker.fetch(new Request('https://portal.test/apps/mesa-madrid/'),env);
 assert.equal(await response.text(),'asset:/apps/mesa-madrid/');
+response=await worker.fetch(new Request('https://portal.test/api/no-existe'),env);
+assert.equal(response.status,404);
 
 const realFetch=globalThis.fetch;
 globalThis.fetch=async(url)=>{assert.match(String(url),/overpass/);return Response.json({elements:[{type:'node',id:1,lat:40.42,lon:-3.70,tags:{amenity:'restaurant',name:'Restaurante verificado','addr:street':'Calle Real','addr:housenumber':'1',cuisine:'spanish',website:'https://example.com'}}]})};
