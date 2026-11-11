@@ -1,0 +1,22 @@
+{
+  "fecha": "2026-11-10",
+  "navegador": "Chromium headless",
+  "servidor": "HTTP local",
+  "resultado": "APROBADO",
+  "pruebas": {
+    "http_status": 200,
+    "restaurantes_cargados": 100,
+    "coordenadas_validas": true,
+    "mapa_inicializado_antes_de_markers": true,
+    "marcadores_sin_filtros": 100,
+    "marcadores_dentro_del_viewport_inicial": 100,
+    "tarjetas_sin_filtros": 100,
+    "filtro_precio": {"tarjetas": 34, "marcadores": 34},
+    "filtros_combinados_precio_gluten_zona": {"tarjetas": 1, "marcadores": 1},
+    "tarjeta_centra_y_destaca_marcador": true,
+    "marcador_abre_popup_con_nombre_precio_direccion_reserva": true,
+    "recursos_externos_o_tiles": 0,
+    "errores_javascript": 0
+  },
+  "captura": "VERIFICACION-100-MARCADORES.png"
+}

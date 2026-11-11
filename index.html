@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="Centro unificado para acceder a todas tus aplicaciones web.">
+  <title>Nexus · Centro de Aplicaciones</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/nexus-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#catalogo">Saltar al catálogo</a>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#inicio" aria-label="Nexus, inicio">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span><strong>NEXUS</strong><small>Centro de aplicaciones</small></span>
+    </a>
+    <nav class="top-actions" aria-label="Acciones">
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Cambiar tema" title="Cambiar tema"><span aria-hidden="true">◐</span></button>
+      <button class="install-button" id="installBtn" type="button" hidden>Instalar centro</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="eyebrow"><span></span> TU ESPACIO DIGITAL</div>
+      <h1>Tus aplicaciones recientes.<br><em>Listas para descubrir.</em></h1>
+      <p>Accede desde un único portal a las aplicaciones recientes preparadas para GitHub, Cloudflare y la web.</p>
+      <div class="hero-stats" aria-label="Resumen del catálogo">
+        <div><b id="appCount">4</b><span>Aplicaciones recientes</span></div>
+        <div><b>2</b><span>Categorías</span></div>
+        <div><b>1</b><span>Centro unificado</span></div>
+      </div>
+    </section>
+
+    <section class="workspace" id="catalogo">
+      <div class="toolbar">
+        <label class="searchbox" for="searchInput">
+          <span aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" autocomplete="off" placeholder="Buscar una aplicación, función o categoría…">
+          <kbd>Ctrl K</kbd>
+        </label>
+        <div class="filters" id="filters" role="group" aria-label="Filtrar aplicaciones">
+          <button type="button" class="filter active" data-filter="all">Todas</button>
+          <button type="button" class="filter" data-filter="favoritas">Favoritas</button>
+          <button type="button" class="filter" data-filter="planes">Planes</button>
+          <button type="button" class="filter" data-filter="juegos">Juegos</button>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <div><span class="section-kicker">CATÁLOGO</span><h2 id="catalogTitle">Todas las aplicaciones</h2></div>
+        <span class="result-count" id="resultCount" aria-live="polite"></span>
+      </div>
+      <div class="app-grid" id="appGrid"></div>
+      <div class="empty-state" id="emptyState" hidden>
+        <span>⌕</span><h3>No hay coincidencias</h3><p>Prueba con otro término o cambia el filtro.</p>
+        <button type="button" id="resetBtn">Ver todas</button>
+      </div>
+    </section>
+
+    <section class="recent-panel" id="recentSection" hidden>
+      <div class="section-heading"><div><span class="section-kicker">CONTINÚA DONDE LO DEJASTE</span><h2>Accesos recientes</h2></div><button class="text-button" id="clearRecent" type="button">Limpiar</button></div>
+      <div class="recent-list" id="recentList"></div>
+    </section>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="app-card">
+      <div class="card-glow"></div>
+      <div class="card-top">
+        <div class="app-icon" aria-hidden="true"></div>
+        <button class="favorite" type="button" aria-label="Añadir a favoritos" title="Añadir a favoritos">☆</button>
+      </div>
+      <div class="badges"></div>
+      <h3></h3><p class="description"></p>
+      <div class="tags"></div>
+      <div class="card-footer">
+        <a class="open-app" href="#"><span>Abrir aplicación</span><b aria-hidden="true">↗</b></a>
+        <button class="more" type="button" aria-label="Ver detalles" title="Ver detalles">•••</button>
+      </div>
+    </article>
+  </template>
+
+  <dialog id="detailsDialog">
+    <button class="dialog-close" type="button" aria-label="Cerrar">×</button>
+    <div class="dialog-icon app-icon"></div>
+    <div class="dialog-badges badges"></div>
+    <h2></h2><p class="dialog-description"></p>
+    <dl><div><dt>Categoría</dt><dd id="dialogCategory"></dd></div><div><dt>Formato</dt><dd>Aplicación web</dd></div><div><dt>Disponibilidad</dt><dd>Incluida en este paquete</dd></div></dl>
+    <a class="dialog-open" href="#">Abrir aplicación <span>↗</span></a>
+  </dialog>
+
+  <footer><span>NEXUS · Centro de Aplicaciones</span><span>Todo organizado. Todo a un clic.</span></footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

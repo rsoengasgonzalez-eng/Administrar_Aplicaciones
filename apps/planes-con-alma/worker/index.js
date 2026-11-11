@@ -1,0 +1,9 @@
+const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json;charset=UTF-8','access-control-allow-origin':'*'}});
+export default {async fetch(request,env){const url=new URL(request.url);if(request.method==='OPTIONS')return new Response(null,{headers:{'access-control-allow-origin':'*','access-control-allow-methods':'GET,POST,PATCH,DELETE','access-control-allow-headers':'content-type'}});
+try{
+if(url.pathname==='/api/health')return json({ok:true,service:'planes-con-alma'});
+if(url.pathname==='/api/plans'&&request.method==='GET'){const {results}=await env.DB.prepare("SELECT p.*, COUNT(CASE WHEN pa.status='confirmed' THEN 1 END) attendee_count FROM plans p LEFT JOIN plan_attendees pa ON pa.plan_id=p.id WHERE p.status='published' GROUP BY p.id ORDER BY starts_at").all();return json(results);}
+if(url.pathname==='/api/plans'&&request.method==='POST'){const p=await request.json();const result=await env.DB.prepare('INSERT INTO plans(owner_id,title,category,starts_at,location,address,capacity,price,description,image_url,allow_waitlist) VALUES(?,?,?,?,?,?,?,?,?,?,?)').bind(p.owner_id,p.title,p.category,p.starts_at,p.location,p.address||'',p.capacity||20,p.price||'',p.description||'',p.image_url||'',p.allow_waitlist===false?0:1).run();return json({id:result.meta.last_row_id},201);}
+const match=url.pathname.match(/^\/api\/plans\/(\d+)$/);if(match&&request.method==='GET'){const plan=await env.DB.prepare('SELECT * FROM plans WHERE id=?').bind(match[1]).first();if(!plan)return json({error:'Plan no encontrado'},404);const {results:attendees}=await env.DB.prepare('SELECT u.id,u.alias,u.avatar_url,pa.status,pa.joined_at FROM plan_attendees pa JOIN users u ON u.id=pa.user_id WHERE pa.plan_id=? ORDER BY pa.joined_at').bind(match[1]).all();return json({...plan,attendees});}
+return json({error:'Ruta no encontrada'},404);
+}catch(error){return json({error:'Error interno',detail:error.message},500);}}};

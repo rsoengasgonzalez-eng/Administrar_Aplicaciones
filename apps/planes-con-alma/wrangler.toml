@@ -1,0 +1,8 @@
+name = "planes-con-alma-api"
+main = "worker/index.js"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "planes-con-alma"
+database_id = "REEMPLAZAR_CON_TU_DATABASE_ID"

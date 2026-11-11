@@ -1,0 +1,24 @@
+{
+  "version": "mesa-madrid-v5-cloudflare",
+  "fecha": "2026-11-10",
+  "resultado": "APROBADO",
+  "cloudflare": {
+    "archivo_redirects_presente": false,
+    "regla_spa_problematica_presente": false,
+    "index_html_en_raiz": true,
+    "headers_cloudflare_presente": true,
+    "routing": "estatico nativo de Cloudflare"
+  },
+  "regresion_funcional": {
+    "restaurantes": 100,
+    "coordenadas_validas": true,
+    "mapa_inicializado": true,
+    "marcadores_sin_filtros": 100,
+    "tarjetas_sin_filtros": 100,
+    "sincronizacion_filtros_listado_mapa": true,
+    "tarjeta_destaca_marcador": true,
+    "marcador_abre_popup_reserva": true,
+    "recursos_cartograficos_externos": 0,
+    "errores_javascript": 0
+  }
+}

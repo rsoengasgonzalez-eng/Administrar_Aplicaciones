@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="Madrid Mystery: misiones cooperativas, pistas cada 30 minutos y casos de 48 horas.">
+  <title>Madrid Mystery</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#expediente" aria-label="Madrid Mystery, inicio">
+      <span class="brand-mark">M</span>
+      <span><b>Madrid</b><small>Mystery</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="live"><i></i> Caso activo</span>
+      <button class="icon-button" id="profileButton" aria-label="Perfil"><span id="profileInitial">?</span></button>
+    </div>
+  </header>
+
+  <main id="app" class="shell" aria-live="polite">
+    <section class="loading-card" id="loadingView">
+      <div class="spinner"></div>
+      <h1>Abriendo el expediente</h1>
+      <p>Sincronizando el reloj y las pruebas disponibles…</p>
+    </section>
+
+    <section id="errorView" class="error-card hidden">
+      <span class="error-icon">!</span>
+      <h1>No hemos podido abrir el expediente</h1>
+      <p id="errorMessage">Ha ocurrido un error inesperado.</p>
+      <button class="primary" id="retryButton">Reintentar</button>
+    </section>
+
+    <div id="gameView" class="hidden">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow"><span id="caseCode">MM-0000</span><span class="dot">•</span><span id="district">Madrid</span></div>
+          <h1 id="caseTitle">Expediente</h1>
+          <p id="caseSynopsis"></p>
+          <div class="hero-pills">
+            <span>48 h máximo</span><span>Pistas cada 30 min</span><span id="catalogPill">1.000 casos</span><span id="teamPill">Equipo automático</span>
+          </div>
+        </div>
+        <div class="timer-panel">
+          <span class="timer-label">El expediente se cierra en</span>
+          <strong id="caseTimer">--:--:--</strong>
+          <div class="timer-track"><i id="caseProgress"></i></div>
+          <small id="caseDates"></small>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="Secciones del juego">
+        <button class="tab active" data-tab="expediente">Expediente</button>
+        <button class="tab" data-tab="sospechosos">Sospechosos</button>
+        <button class="tab" data-tab="pistas">Pistas <span id="clueBadge">0/16</span></button>
+        <button class="tab" data-tab="misiones">Misiones <span id="missionBadge">0/5</span></button>
+        <button class="tab" data-tab="acusacion">Acusación</button>
+        <button class="tab" data-tab="ranking">Ranking</button>
+      </nav>
+
+      <section class="tab-panel active" data-panel="expediente">
+        <div class="section-head"><div><span class="kicker">Informe inicial</span><h2>Lo que sabemos</h2></div><span class="status-chip">Investigación abierta</span></div>
+        <div class="overview-grid">
+          <article class="case-card victim-card"><span class="card-label">Víctima</span><h3 id="victim"></h3><p>La identidad está confirmada. El motivo sigue bajo investigación.</p></article>
+          <article class="case-card"><span class="card-label">Escena</span><h3 id="crimeScene"></h3><p id="locationDetail"></p></article>
+          <article class="case-card next-card"><span class="card-label">Próxima pista</span><h3 id="nextClueTimer">--</h3><p id="nextClueText">Calculando disponibilidad…</p></article>
+        </div>
+        <article class="rules-card">
+          <div class="rules-number">48</div>
+          <div><span class="kicker">Cómo se juega</span><h2>Observa, supera misiones y acusa</h2><p>Se publica una pista cada 30 minutos. Las cinco misiones son obligatorias y compartidas por el equipo. Al completarlas, podéis presentar la acusación y terminar sin esperar a las 48 horas.</p></div>
+          <div class="rule-list"><span><b>01</b> Investiga en equipo</span><span><b>02</b> Completa 5 misiones</span><span><b>03</b> Presenta la acusación</span></div>
+        </article>
+        <article id="teamStatusCard" class="solution-card hidden"></article>
+        <article id="previousSolution" class="solution-card hidden"></article>
+      </section>
+
+      <section class="tab-panel" data-panel="sospechosos">
+        <div class="section-head"><div><span class="kicker">Personas de interés</span><h2>Cuatro versiones. Una no encaja.</h2></div></div>
+        <div id="suspectGrid" class="suspect-grid"></div>
+      </section>
+
+      <section class="tab-panel" data-panel="pistas">
+        <div class="section-head"><div><span class="kicker">Cadena de pruebas</span><h2>Una revelación cada 30 minutos</h2></div><span id="clueCount" class="status-chip"></span></div>
+        <div id="clueTimeline" class="clue-timeline"></div>
+      </section>
+
+      <section class="tab-panel" data-panel="misiones">
+        <div class="section-head"><div><span class="kicker">Objetivos obligatorios</span><h2>Completad las cinco misiones</h2></div><span id="missionCount" class="status-chip">0 de 5</span></div>
+        <div id="missionNotice" class="mode-note">Registra tu alias para sincronizar el progreso del equipo.</div>
+        <div id="missionList" class="mission-list"></div>
+      </section>
+
+      <section class="tab-panel" data-panel="acusacion">
+        <div class="section-head"><div><span class="kicker">Veredicto</span><h2>Presenta tu teoría final</h2></div></div>
+        <div id="accusationLocked" class="locked-callout"><span>⌛</span><div><h3>La acusación todavía está cerrada</h3><p>El equipo debe completar las cinco misiones obligatorias.</p><strong id="accusationTimer">0 de 5 misiones completadas</strong></div></div>
+        <form id="accusationForm" class="accusation-form hidden">
+          <label>¿Quién fue?<select id="accusedSuspect" required><option value="">Selecciona una persona</option></select></label>
+          <label>¿Cuál fue el motivo?<select id="accusedMotive" required><option value="">Selecciona un motivo</option></select></label>
+          <label>¿Qué método utilizó?<select id="accusedMethod" required><option value="">Selecciona un método</option></select></label>
+          <label>¿Dónde ocurrió?<select id="accusedLocation" required><option value="">Selecciona un lugar</option></select></label>
+          <div class="form-warning">La acusación es única para todo el equipo. Al enviarla, vuestro equipo cerrará el expediente; los demás equipos podrán continuar.</div>
+          <button class="primary wide" type="submit">Registrar acusación</button>
+        </form>
+        <article id="accusationResult" class="result-card hidden"></article>
+      </section>
+
+      <section class="tab-panel" data-panel="ranking">
+        <div class="section-head"><div><span class="kicker">Clasificación del caso</span><h2>Detectives con mejor puntuación</h2></div><button class="secondary" id="refreshRanking">Actualizar</button></div>
+        <div id="rankingMode" class="mode-note"></div>
+        <div class="ranking-table"><div class="ranking-row ranking-header"><span>#</span><span>Detective</span><span>Equipo</span><span>Puntos</span></div><div id="rankingRows"></div></div>
+      </section>
+    </div>
+  </main>
+
+  <footer><span>Madrid Mystery</span><span>•</span><span>Diseñado para jugar desde WhatsApp</span></footer>
+
+  <dialog id="profileDialog" class="modal">
+    <form id="profileForm" method="dialog">
+      <button type="button" class="modal-close" id="closeProfile" aria-label="Cerrar">×</button>
+      <span class="kicker">Tu identidad</span><h2>Elige un alias de detective</h2>
+        <p>Tu usuario, equipo y progreso se guardarán en Cloudflare D1. La asignación de equipo es automática.</p>
+      <label>Alias<input id="aliasInput" maxlength="24" minlength="2" autocomplete="nickname" placeholder="Ej. Gata de Atocha" required></label>
+        <label>Código de grupo fijo (opcional)<input id="assignmentCodeInput" maxlength="80" autocomplete="off" placeholder="Solo para las 2 usuarias indicadas"></label>
+      <button class="primary wide" type="submit">Entrar en el caso</button>
+      <p id="profileNote" class="form-note"></p>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>

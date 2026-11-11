@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Buscador de escape rooms de Madrid por grupo, temática y precio." />
+  <title>EscapeMadrid — Encuentra tu escape room</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#resultados">Saltar a resultados</a>
+  <header class="hero">
+    <nav class="nav shell" aria-label="Navegación principal">
+      <a class="brand" href="./" aria-label="EscapeMadrid, inicio">
+        <span class="brand-mark" aria-hidden="true">EM</span>
+        <span>Escape<span>Madrid</span></span>
+      </a>
+      <div class="nav-actions">
+        <button id="shareButton" class="ghost-button" type="button" title="Copiar enlace con los filtros actuales">Compartir búsqueda</button>
+        <a class="nav-link" href="#metodologia">Sobre los datos</a>
+      </div>
+    </nav>
+
+    <div class="hero-content shell">
+      <p class="eyebrow">BUSCADOR DE ESCAPE ROOMS · MADRID</p>
+      <h1>Un plan que encaja con<br /><span>todo vuestro equipo.</span></h1>
+      <p class="hero-copy">Filtra por número de personas, temática y presupuesto. Compara experiencias y abre directamente su web, reserva o ubicación.</p>
+      <div class="hero-stats" aria-label="Resumen del catálogo">
+        <div><strong id="catalogCount">0</strong><span>experiencias</span></div>
+        <div><strong id="companyCount">0</strong><span>empresas</span></div>
+        <div><strong id="themeCount">0</strong><span>temáticas</span></div>
+      </div>
+    </div>
+    <div class="hero-glow" aria-hidden="true"></div>
+  </header>
+
+  <main class="shell main-layout">
+    <aside class="filters-panel" aria-labelledby="filtersTitle">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">AFINA EL PLAN</p>
+          <h2 id="filtersTitle">Tu búsqueda</h2>
+        </div>
+        <button id="resetButton" class="text-button" type="button">Limpiar</button>
+      </div>
+
+      <form id="filtersForm">
+        <label class="field-label" for="playersInput">¿Cuántas personas sois?</label>
+        <div class="players-control">
+          <button id="minusPlayer" type="button" aria-label="Quitar una persona">−</button>
+          <input id="playersInput" type="number" min="2" max="100" value="4" inputmode="numeric" />
+          <button id="plusPlayer" type="button" aria-label="Añadir una persona">+</button>
+        </div>
+        <input id="playersRange" class="range" type="range" min="2" max="20" value="4" aria-label="Número de personas" />
+
+        <label class="field-label" for="themeSelect">Temática</label>
+        <select id="themeSelect">
+          <option value="">Todas las temáticas</option>
+        </select>
+
+        <label class="field-label" for="budgetInput">Presupuesto máximo por persona</label>
+        <div class="input-with-suffix">
+          <input id="budgetInput" type="number" min="0" max="200" step="1" placeholder="Sin límite" inputmode="decimal" />
+          <span>€/persona</span>
+        </div>
+
+        <label class="field-label" for="searchInput">Nombre, empresa o zona</label>
+        <div class="search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Ej. terror, Chamberí…" />
+        </div>
+
+        <label class="check-row">
+          <input id="unknownPriceInput" type="checkbox" checked />
+          <span>Mostrar también precios a consultar</span>
+        </label>
+
+        <button class="primary-button" type="submit">Ver opciones compatibles</button>
+      </form>
+
+      <div class="data-note">
+        <strong>Importante</strong>
+        <p>Los precios variables son orientativos. Confirma siempre el importe y la disponibilidad en la web oficial antes de reservar.</p>
+      </div>
+    </aside>
+
+    <section class="results-area" id="resultados" aria-labelledby="resultsTitle">
+      <div class="results-toolbar">
+        <div>
+          <p class="section-kicker">OPCIONES PARA VOSOTROS</p>
+          <h2 id="resultsTitle"><span id="resultsCount">0</span> resultados</h2>
+          <p id="resultsContext" class="results-context"></p>
+        </div>
+        <label class="sort-control">Ordenar por
+          <select id="sortSelect">
+            <option value="recommended">Recomendados</option>
+            <option value="price-asc">Precio por persona</option>
+            <option value="capacity-desc">Mayor capacidad</option>
+            <option value="duration-desc">Mayor duración</option>
+            <option value="name-asc">Nombre</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="activeFilters" class="active-filters" aria-live="polite"></div>
+      <div id="resultsGrid" class="cards-grid" aria-live="polite"></div>
+      <div id="emptyState" class="empty-state" hidden>
+        <span aria-hidden="true">⌁</span>
+        <h3>No hay coincidencias exactas</h3>
+        <p>Prueba a ampliar el presupuesto, quitar la temática o cambiar el tamaño del grupo.</p>
+        <button id="emptyResetButton" class="secondary-button" type="button">Restablecer filtros</button>
+      </div>
+    </section>
+  </main>
+
+  <section id="compareSection" class="compare-section shell" hidden aria-labelledby="compareTitle">
+    <div class="compare-heading">
+      <div>
+        <p class="section-kicker">COMPARADOR</p>
+        <h2 id="compareTitle">Decide de un vistazo</h2>
+      </div>
+      <button id="clearCompareButton" class="text-button" type="button">Vaciar comparación</button>
+    </div>
+    <div class="compare-scroll"><table id="compareTable"></table></div>
+  </section>
+
+  <section id="metodologia" class="methodology">
+    <div class="shell methodology-grid">
+      <div>
+        <p class="section-kicker">SOBRE LOS DATOS</p>
+        <h2>Un MVP preparado para crecer</h2>
+      </div>
+      <div class="methodology-copy">
+        <p>Esta versión incluye una muestra curada de experiencias de Madrid. Cada ficha conserva la URL oficial, la URL de reserva cuando está disponible, una dirección para abrir el mapa y la fuente utilizada para capacidad, temática y precio.</p>
+        <p>Los rangos de precio se interpolan únicamente para ofrecer una estimación comparable. La fuente mostrada en cada tarjeta mantiene el rango publicado; la web oficial es siempre la referencia final.</p>
+      </div>
+      <div class="methodology-points">
+        <div><span>01</span><p><strong>Datos separados</strong><br />Catálogo en un fichero editable.</p></div>
+        <div><span>02</span><p><strong>Sin backend</strong><br />Se ejecuta en cualquier hosting estático.</p></div>
+        <div><span>03</span><p><strong>Listo para API</strong><br />El modelo puede migrarse a PostgreSQL.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <template id="cardTemplate">
+    <article class="escape-card">
+      <div class="card-topline">
+        <span class="company"></span>
+        <button class="compare-toggle" type="button" aria-pressed="false">+ Comparar</button>
+      </div>
+      <h3 class="escape-name"></h3>
+      <p class="location"></p>
+      <div class="theme-chips"></div>
+      <div class="facts">
+        <div><span class="fact-icon">●</span><span class="players-fact"></span></div>
+        <div><span class="fact-icon">◷</span><span class="duration-fact"></span></div>
+      </div>
+      <div class="price-block">
+        <div><span>Precio para el grupo</span><strong class="total-price"></strong></div>
+        <div><span>Por persona</span><strong class="person-price"></strong></div>
+        <small class="price-note"></small>
+      </div>
+      <div class="card-actions">
+        <a class="primary-link official-link" target="_blank" rel="noopener noreferrer">Web oficial ↗</a>
+        <a class="secondary-link booking-link" target="_blank" rel="noopener noreferrer">Reservar</a>
+      </div>
+      <details>
+        <summary>Más información</summary>
+        <div class="detail-content">
+          <p class="published-price"></p>
+          <p class="address"></p>
+          <p class="room-note"></p>
+          <div class="detail-links">
+            <a class="map-link" target="_blank" rel="noopener noreferrer">Cómo llegar ↗</a>
+            <a class="source-link" target="_blank" rel="noopener noreferrer">Fuente del dato ↗</a>
+          </div>
+          <p class="updated"></p>
+        </div>
+      </details>
+    </article>
+  </template>
+
+  <script src="data.js"></script>
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

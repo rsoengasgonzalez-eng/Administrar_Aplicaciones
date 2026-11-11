@@ -1,0 +1,11 @@
+{
+  "name": "planes-con-alma",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PWA para organizar planes de un grupo de amigos",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "start": "python3 -m http.server 4173",
+    "check": "node --check app.js"
+  }
+}

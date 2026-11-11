@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#4b1235">
+  <meta name="description" content="Descubre restaurantes en Madrid y alrededores, filtra por precio y necesidades alimentarias y solicita una reserva.">
+  <title>Mesa Madrid · Restaurantes y reservas</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#results">Saltar a resultados</a>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Mesa Madrid, inicio">
+      <span class="brand-mark">M</span>
+      <span><strong>Mesa</strong><small>MADRID</small></span>
+    </a>
+    <div class="top-actions">
+      <button class="ghost-btn" id="favoritesBtn" type="button" aria-pressed="false">♡ <span>Favoritos</span> <b id="favoritesCount">0</b></button>
+      <button class="ghost-btn" id="reservationsBtn" type="button">▣ <span>Mis reservas</span></button>
+      <button class="primary-btn" id="shareBtn" type="button">↗ <span>Compartir</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">MADRID Y ALREDEDORES · HASTA 60 KM</p>
+        <h1 id="heroTitle">Tu próxima mesa,<br><em>más fácil.</em></h1>
+        <p>Encuentra restaurantes según tu presupuesto y necesidades alimentarias. Comprueba su ubicación real en el mapa y solicita una reserva.</p>
+      </div>
+      <div class="hero-note"><span>100</span><small>restaurantes<br>de demostración</small></div>
+    </section>
+
+    <section class="filter-panel" aria-label="Filtros de restaurantes">
+      <div class="search-row">
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <span class="sr-only">Buscar restaurantes</span>
+          <input id="searchInput" type="search" placeholder="Filtra por restaurante, cocina, barrio o ambiente…" autocomplete="off">
+        </label>
+        <button class="clear-btn" id="clearFiltersBtn" type="button">Limpiar</button>
+      </div>
+      <div class="filter-grid">
+        <fieldset class="filter-group price-group">
+          <legend>PRECIO POR PERSONA</legend>
+          <div class="chip-row" id="priceFilters">
+            <button class="filter-chip" type="button" data-price="1" aria-pressed="false"><b>€</b><small>hasta 20 €</small></button>
+            <button class="filter-chip" type="button" data-price="2" aria-pressed="false"><b>€€</b><small>20–35 €</small></button>
+            <button class="filter-chip" type="button" data-price="3" aria-pressed="false"><b>€€€</b><small>más de 35 €</small></button>
+          </div>
+        </fieldset>
+        <fieldset class="filter-group allergy-group">
+          <legend>NECESITO OPCIONES SIN…</legend>
+          <div class="chip-row compact" id="allergyFilters">
+            <button class="filter-chip" type="button" data-allergy="gluten" aria-pressed="false">Gluten</button>
+            <button class="filter-chip" type="button" data-allergy="lactosa" aria-pressed="false">Lactosa</button>
+            <button class="filter-chip" type="button" data-allergy="frutos secos" aria-pressed="false">Frutos secos</button>
+            <button class="filter-chip" type="button" data-allergy="huevo" aria-pressed="false">Huevo</button>
+            <button class="filter-chip" type="button" data-allergy="marisco" aria-pressed="false">Marisco</button>
+            <button class="filter-chip" type="button" data-allergy="soja" aria-pressed="false">Soja</button>
+          </div>
+          <p class="filter-help">Muestra locales que declaran disponer de opciones adaptables. Confirma siempre con el restaurante.</p>
+        </fieldset>
+        <fieldset class="filter-group location-group">
+          <legend>UBICACIÓN</legend>
+          <label class="select-label">ZONA
+            <select id="zoneFilter"><option value="all">Todas las zonas</option></select>
+          </label>
+          <label class="range-label"><span>DISTANCIA DESDE SOL</span><strong><span id="distanceValue">60</span> KM</strong></label>
+          <input id="distanceFilter" type="range" min="2" max="60" value="60" step="1">
+          <div class="range-scale"><span>2 km</span><span>60 km</span></div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="results-toolbar" id="results">
+      <div><strong id="resultCount">100</strong> <span>restaurantes encontrados</span></div>
+      <div class="toolbar-actions">
+        <div class="view-switch" role="group" aria-label="Vista en móvil">
+          <button type="button" id="listViewBtn" aria-pressed="true">Lista</button>
+          <button type="button" id="mapViewBtn" aria-pressed="false">Mapa</button>
+        </div>
+        <label>Ordenar por
+          <select id="sortSelect">
+            <option value="recommended">Recomendados</option>
+            <option value="distance">Más cercanos</option>
+            <option value="rating">Mejor valorados</option>
+            <option value="priceAsc">Precio más bajo</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="restaurant-list" id="restaurantList" aria-live="polite" aria-label="Listado de restaurantes"></div>
+      <aside class="map-column" id="mapColumn" aria-label="Mapa interactivo de restaurantes">
+        <div class="map-shell" id="mapShell">
+          <div class="map-status"><span class="status-dot"></span><strong id="mapStatusText">Inicializando mapa…</strong><button id="fitMapBtn" type="button">Centrar</button></div>
+          <div class="map-viewport" id="mapViewport" tabindex="0" aria-label="Mapa interactivo. Usa la rueda para acercar o alejar y arrastra para desplazarte.">
+            <div class="map-world" id="mapWorld">
+              <svg class="map-base" viewBox="0 0 1600 1100" role="img" aria-label="Mapa vectorial local de Madrid y municipios cercanos">
+                <rect width="1600" height="1100" fill="#edf0e8"/>
+                <path d="M0 170 C260 90 440 210 650 120 S1050 40 1600 130 L1600 0H0Z" fill="#e0e8d9"/>
+                <path d="M0 830 C290 710 410 910 720 820 S1190 690 1600 800 V1100H0Z" fill="#e1eadb"/>
+                <path d="M1030 -30 C980 180 1080 300 1000 470 S960 760 1050 1130" fill="none" stroke="#b9d9df" stroke-width="28" opacity=".9"/>
+                <path d="M1030 -30 C980 180 1080 300 1000 470 S960 760 1050 1130" fill="none" stroke="#d9f0f3" stroke-width="11"/>
+                <g fill="none" stroke-linecap="round">
+                  <ellipse cx="820" cy="560" rx="270" ry="210" stroke="#fff" stroke-width="22"/>
+                  <ellipse cx="820" cy="560" rx="405" ry="320" stroke="#fff" stroke-width="18"/>
+                  <ellipse cx="820" cy="560" rx="585" ry="455" stroke="#fbfcfa" stroke-width="13" stroke-dasharray="26 13"/>
+                  <path d="M70 560 H1540 M820 30 V1060 M170 100 L1435 1000 M155 1010 L1450 80 M60 270 L1540 820 M70 870 L1510 230" stroke="#fff" stroke-width="13"/>
+                  <path d="M400 30 C470 300 620 415 820 560 S1150 850 1250 1090 M20 720 C370 660 620 610 820 560 S1250 440 1580 300" stroke="#d5c3ad" stroke-width="7"/>
+                  <path d="M250 30 C420 240 630 440 820 560 S1200 720 1540 900 M60 380 C350 410 560 470 820 560 S1290 670 1580 650" stroke="#dac8b8" stroke-width="5"/>
+                </g>
+                <g class="place-labels" text-anchor="middle">
+                  <text x="820" y="545" class="city-main">MADRID</text><text x="820" y="570">Puerta del Sol</text>
+                  <text x="1105" y="320">ALCOBENDAS</text><text x="1260" y="430">ALCALÁ DE HENARES</text>
+                  <text x="435" y="340">LAS ROZAS</text><text x="300" y="235">COLLADO VILLALBA</text>
+                  <text x="615" y="720">ALCORCÓN</text><text x="780" y="790">GETAFE</text>
+                  <text x="1110" y="770">RIVAS-VACIAMADRID</text><text x="875" y="980">ARANJUEZ</text>
+                  <text x="220" y="120">SAN LORENZO</text><text x="1185" y="615">TORREJÓN</text>
+                </g>
+              </svg>
+              <div class="marker-layer" id="markerLayer" aria-live="polite"></div>
+            </div>
+            <div class="map-controls" aria-label="Controles del mapa">
+              <button id="zoomInBtn" type="button" aria-label="Acercar">+</button>
+              <button id="zoomOutBtn" type="button" aria-label="Alejar">−</button>
+              <button id="resetMapBtn" type="button" aria-label="Ver todos los restaurantes">⌂</button>
+            </div>
+            <div class="map-help">Arrastra para mover · rueda para ampliar</div>
+            <div class="map-popup" id="mapPopup" hidden></div>
+          </div>
+          <div class="map-legend"><span><i></i> Restaurante</span><span><i class="selected-dot"></i> Seleccionado</span><b id="markerCount">0 marcadores</b></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="reservationDialog" class="modal">
+    <form method="dialog" id="reservationForm">
+      <button class="modal-close" value="cancel" aria-label="Cerrar">×</button>
+      <p class="eyebrow">SOLICITUD DE RESERVA</p>
+      <h2 id="reservationTitle">Reservar mesa</h2>
+      <input type="hidden" id="reservationRestaurantId">
+      <div class="form-grid">
+        <label>Nombre<input id="reservationName" required autocomplete="name"></label>
+        <label>Teléfono<input id="reservationPhone" required type="tel" autocomplete="tel"></label>
+        <label>Fecha<input id="reservationDate" required type="date"></label>
+        <label>Hora<input id="reservationTime" required type="time" value="21:00"></label>
+        <label>Personas<input id="reservationPeople" required type="number" min="1" max="20" value="2"></label>
+        <label class="full">Notas y alergias<textarea id="reservationNotes" rows="3" placeholder="Indica cualquier necesidad para confirmarla con el restaurante"></textarea></label>
+      </div>
+      <p class="demo-warning">Demostración: la solicitud se guarda en este dispositivo y no se envía a un restaurante real.</p>
+      <button class="primary-btn wide" value="default" type="submit">Guardar solicitud</button>
+    </form>
+  </dialog>
+
+  <dialog id="savedDialog" class="modal saved-modal">
+    <form method="dialog">
+      <button class="modal-close" value="cancel" aria-label="Cerrar">×</button>
+      <p class="eyebrow">MIS RESERVAS</p>
+      <h2>Solicitudes guardadas</h2>
+      <div id="savedReservations"></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="restaurants.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
