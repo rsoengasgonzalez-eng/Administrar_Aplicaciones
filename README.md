@@ -1,34 +1,54 @@
-# Nexus · Centro de Aplicaciones Recientes
+# Nexus · Portal integrado v5
 
-Portal estático con las aplicaciones recientes seleccionadas para publicarse desde GitHub. Se han excluido todas las aplicaciones de Coty y también FrikiMadrid, Impostor Party y Agenda Deportiva.
+Portal Cloudflare Worker que reúne cuatro aplicaciones y ejecuta primero el Worker para todas las rutas `/api/*`.
 
-## Aplicaciones incluidas
+## Aplicaciones y fuentes
 
-1. **Planes con Alma** — organización de planes, calendario, votaciones, inscripciones y WhatsApp.
-2. **Mesa Madrid v5** — restaurantes, filtros, mapa, favoritos y solicitudes de reserva.
-3. **EscapeMadrid MVP** — buscador y comparador de escape rooms de Madrid.
-4. **Madrid Mystery v3** — juego cooperativo de investigación por equipos.
+- **Planes con Alma:** datos compartidos en un Durable Object con SQLite. La base comienza vacía; no hay planes, perfiles, comentarios ni votaciones precargados.
+- **Madrid Mystery:** el portal envía `/api/madrid-mystery/*` al Worker `juego` mediante un service binding, conservando su D1 y el progreso existente.
+- **MusicHub:** el portal envía `/api/music-hub/*` al Worker `musichub` mediante un service binding, conservando las canciones, reproducciones, favoritos y playlists de su D1.
+- **Mesa Madrid:** restaurantes reales obtenidos de OpenStreetMap/Overpass, sin valoraciones, precios, disponibilidad ni reservas simuladas.
+- **EscapeMadrid:** escape rooms publicados en OpenStreetMap/Overpass, sin precios, aforos, duración o temática inventados.
 
-## Publicar el portal en GitHub Pages
+Todas las tarjetas, accesos recientes y enlaces del diálogo de Nexus abren la aplicación en una pestaña nueva y mantienen abierto el portal original.
 
-1. Extrae el ZIP.
-2. Copia todo su contenido a la raíz de un repositorio.
-3. En GitHub abre **Settings → Pages**.
-4. Selecciona **Deploy from a branch**, rama `main` y carpeta `/ (root)`.
-5. Guarda y espera a que GitHub publique el sitio.
+## Despliegue en Cloudflare desde GitHub
 
-También puede publicarse en Cloudflare Pages, Netlify o Azure Static Web Apps sin proceso de compilación.
+Requisitos:
+
+1. Debe existir el Worker de Madrid Mystery con el nombre de servicio exacto `juego` y su base D1 operativa.
+2. Debe existir el Worker de MusicHub con el nombre de servicio exacto `musichub` y su base D1 operativa.
+3. El repositorio debe conservar `wrangler.jsonc`, `src/worker.js`, `.assetsignore` y la carpeta `apps`.
+
+Configuración de Workers Builds:
+
+- **Root directory:** `/`
+- **Build command:** `npm install`
+- **Deploy command:** `npx wrangler deploy`
+- **Node:** 22 o posterior
+
+`wrangler.jsonc` crea automáticamente el Durable Object SQLite `PlansStore` en el primer despliegue. No es necesario crear ni introducir un identificador de base para Planes con Alma.
+
+Los bindings `MADRID_MYSTERY` y `MUSIC_HUB` apuntan a los servicios `juego` y `musichub`. Los tres Workers deben pertenecer a la misma cuenta de Cloudflare. Si alguno tiene otro nombre, cambia su valor `service` en `wrangler.jsonc` antes de desplegar.
+
+## Comprobación posterior
+
+Abre estas rutas en el dominio del portal:
+
+- `/api/health`
+- `/api/planes/health` con la cabecera `x-client-id`
+- `/api/madrid-mystery/health`
+- `/api/music-hub/health`
+- `/api/mesa/restaurants`
+- `/api/escape/rooms`
+
+La primera debe indicar `planesStore: true`, `madridMysteryService: true` y `musicHubService: true`. Madrid Mystery y MusicHub deben informar de base de datos lista. Las dos últimas deben devolver `source: OpenStreetMap / Overpass`.
 
 ## Uso local
 
-Sirve la carpeta mediante HTTP para mantener correctamente todas las rutas:
-
 ```bash
-python3 -m http.server 8080
+npm install
+npm run dev
 ```
 
-Después abre `http://localhost:8080`.
-
-## Nota sobre el backend
-
-Las aplicaciones estáticas funcionan directamente. Las funciones compartidas de **Madrid Mystery** dependen de su servicio de Cloudflare Workers y de la configuración de producción correspondiente.
+El desarrollo local necesita acceso a Cloudflare para Durable Objects y al service binding de Madrid Mystery. Para comprobar solo los archivos estáticos puede usarse `python3 -m http.server 8080`, pero las APIs no estarán disponibles con un servidor estático.

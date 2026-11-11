@@ -5,3 +5,5 @@ html[data-theme="light"]{--bg:#f4f8fc;--panel:#fff;--panel2:#edf4fa;--text:#0d20
 @media(max-width:980px){.app-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.topbar{height:74px}.brand small{display:none}main{width:min(100% - 28px,1280px)}.hero{padding:58px 0 52px}h1{font-size:45px}.hero-stats div{padding-right:18px;margin-right:18px}.hero-stats b{font-size:25px}kbd{display:none}.app-grid{grid-template-columns:1fr}.app-card{min-height:340px}.section-heading{align-items:start}.result-count{margin-top:10px}.install-button{display:none}footer{margin:0 18px;gap:15px;flex-direction:column}.topbar{padding:0 18px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+.app-card[role="link"]{cursor:pointer}.app-card[role="link"]:focus-visible{outline:3px solid var(--accent);outline-offset:4px}

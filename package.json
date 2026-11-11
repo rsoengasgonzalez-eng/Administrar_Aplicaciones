@@ -1,0 +1,1 @@
+{"name":"nexus-aplicaciones-integradas","version":"5.0.0","private":true,"type":"module","scripts":{"dev":"wrangler dev","deploy":"wrangler deploy","check":"node --check src/worker.js && node --check app.js && node tests/integration.mjs"},"devDependencies":{"wrangler":"^4.45.0"},"engines":{"node":">=20"}}

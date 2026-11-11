@@ -1,12 +1,1 @@
-{
-  "name": "Planes con Alma",
-  "short_name": "Planes",
-  "description": "Organiza planes, apúntate y comparte con tu grupo.",
-  "start_url": "/#home",
-  "display": "standalone",
-  "background_color": "#f8f4ef",
-  "theme_color": "#6d2e46",
-  "icons": [
-    {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
-  ]
-}
+{"name":"Planes con Alma","short_name":"Planes","description":"Planes reales compartidos por el grupo y guardados en el portal.","start_url":"./#home","scope":"./","display":"standalone","background_color":"#f8f4ef","theme_color":"#6d2e46","icons":[{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

@@ -1,12 +1,1 @@
-{
-  "name": "Madrid Mystery",
-  "short_name": "Mystery",
-  "description": "Resuelve misiones cooperativas y cierra el misterio antes de 48 horas.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#080b12",
-  "theme_color": "#080b12",
-  "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
-  ]
-}
+{"name":"Madrid Mystery","short_name":"Mystery","description":"Juego cooperativo conectado al backend persistente de Madrid Mystery.","start_url":"./","scope":"./","display":"standalone","background_color":"#080b12","theme_color":"#080b12","icons":[{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

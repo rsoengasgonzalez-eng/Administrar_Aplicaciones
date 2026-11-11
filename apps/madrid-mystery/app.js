@@ -10,6 +10,7 @@ let profile = storage.get('mm-profile');
 let serverOffset = 0;
 let timerHandle = null;
 let refreshing = false;
+const API_BASE = '/api/madrid-mystery';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[character]));
@@ -17,8 +18,8 @@ function escapeHtml(value) {
 
 async function api(path, options = {}) {
   const headers = { 'content-type':'application/json', ...(options.headers || {}) };
-  if (profile?.token) headers.authorization = `Bearer ${profile.token}`;
-  const response = await fetch(path, { ...options, headers });
+  if (profile?.token) headers.authorization = 'Bearer ' + profile.token;
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(data.error || 'No se pudo completar la operación.');
